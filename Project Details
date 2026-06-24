@@ -1,0 +1,42 @@
+# Customer Retention & RFM Segmentation Analysis (PostgreSQL)
+
+## Business problem
+A retail business has 800 customers and ~7,000 transactions over 24 months. Revenue is healthy at a glance, but leadership doesn't know **who is about to stop buying, or how much revenue is sitting at risk.** This project answers that with SQL alone — no BI tool, no pre-labeled churn flag — going from raw transactions to a segmented, dollar-quantified action list.
+
+## Dataset
+Synthetic transactional data (800 customers, ~7,170 orders, Jan 2023–Dec 2024), generated in PostgreSQL with four engineered behavioral patterns (loyal, at-risk, churned, new) to mirror a real e-commerce transaction log — including ~3% cancelled orders, which the analysis explicitly filters out (a step most beginner SQL projects skip, and most real datasets require).
+
+Schema:
+- `customers (customer_id, customer_name, country, signup_date)`
+- `transactions (invoice_no, customer_id, invoice_date, stock_code, quantity, unit_price, is_cancelled)`
+
+## What the SQL does
+1. **`01_schema.sql`** — table + index design
+2. **`02_generate_data.sql`** — synthetic data generation with `generate_series`, engineered behavioral cohorts
+3. **`03_rfm_analysis.sql`** — cleaning view → customer-level Recency/Frequency/Monetary → `NTILE(5)` window-function scoring → segment labeling (Champion, At Risk, Lost, etc.)
+4. **`04_cohort_retention.sql`** — first-purchase cohort assignment, month-offset calculation, and a self-referencing retention curve (% of each signup cohort still active N months later)
+
+Core techniques: CTEs, views, `NTILE()` window functions, `DATE_TRUNC`, self-joins for cohort offsetting, conditional aggregation.
+
+## Findings
+
+**1. Revenue is dangerously concentrated.**
+"Champion" customers (193 people, last order ~5 days ago) drive 50.4% of total revenue. That's expected and fine — but it means the business has very little cushion if even a fraction of that group goes quiet.
+
+**2. ~29% of revenue is already going quiet.**
+"At Risk" and "At Risk (High Value)" segments — 287 customers who used to order regularly but haven't bought in 90–225+ days — represent **29% of total revenue (~$321K in this dataset)**. These aren't low-value customers; their average order count (6.3–9.8) is close to Champions. They're lapsing, not disengaging.
+
+**3. There's a hard retention cliff at month 1.**
+Every single signup cohort shows the same pattern: 100% active in their first purchase month, dropping to 35–50% active by month 1, then flattening out. This isn't gradual decay — it's a cliff. That points to something structural (onboarding, first-purchase follow-up, or a weak second-purchase incentive), not random attrition.
+
+## Recommendation (the part a dashboard alone doesn't give you)
+- **Short-term:** targeted win-back campaign for "At Risk (High Value)" — 42 customers, $76K, still showing engagement signals (avg. 9.8 orders) despite 91-day average gap. Highest ROI per customer contacted.
+- **Structural fix:** investigate what happens between a customer's 1st and 2nd month — the cliff is too consistent across cohorts to be random. A second-purchase incentive (discount, follow-up email, loyalty signup prompt) timed to land before day 30 is the testable next step.
+- **Don't over-invest in "Lost"** — only 4 customers, $1.3K, 382 days dormant. Not worth campaign spend; deprioritize.
+
+## Files
+- `01_schema.sql`, `02_generate_data.sql`, `03_rfm_analysis.sql`, `04_cohort_retention.sql`
+- `rfm_segment_summary.csv`, `cohort_retention.csv` — exported result sets referenced above
+
+## Stack
+PostgreSQL 16. No external libraries — pure SQL from raw transactions to business recommendation.
