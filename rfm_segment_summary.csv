@@ -1,0 +1,8 @@
+segment_label,customers,avg_days_since_last_order,avg_orders,total_revenue,pct_of_total_revenue
+Champion,195,4,17.9,563380.25,51.7
+At Risk,247,222,6.3,240812.02,22.1
+Needs Attention,182,53,6.3,169022.13,15.5
+At Risk (High Value),45,85,9.8,75657.16,6.9
+New / Low Engagement,96,5,1.9,29238.28,2.7
+Promising,25,4,3.0,11559.27,1.1
+Lost,1,389,3.0,644.89,0.1
